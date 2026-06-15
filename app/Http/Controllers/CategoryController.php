@@ -39,7 +39,7 @@ class CategoryController extends Controller
         );
     }
 
-    public function show($id)
+    public function show(int $id)
     {
         $category = Category::find($id);
 
@@ -54,6 +54,51 @@ class CategoryController extends Controller
                 'category' => $category,
             ],
             200,
+        );
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|string|unique:categories,name',
+            'description' => 'sometimes|nullable|string',
+        ]);
+
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json([
+                'message' => 'Category does not exist'
+            ], 404);
+        }
+        if (isset($validated['name'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+        $category->update($validated);
+
+        return response()->json([
+            'message' => 'The category has been updated sucessfully',
+            'category' => $category
+        ], 200);
+    }
+
+    public function destroy(int $id)
+    {
+
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'message' => 'Cannot delete, category not found'
+            ], 404);
+        }
+
+        $category->delete();
+
+        return response()->json(
+            [
+                'message' => 'Category deleted successfully',
+            ],
+            200
         );
     }
 }

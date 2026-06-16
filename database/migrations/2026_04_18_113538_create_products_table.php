@@ -21,9 +21,9 @@ return new class extends Migration
             $table->integer('year');
             $table->string('make');
             $table->string('model');
-            $table->integer('milage');
+            $table->integer('mileage');
             $table->enum('condition', ['new', 'used'])->default('used');
-            $table->enum('trasmission', ['automatic', 'manual'])->default('automatic');
+            $table->enum('transmission', ['automatic', 'manual'])->default('automatic');
             $table->enum('fuel_type', ['petrol', 'diesel', 'hybrid', 'electric', 'phev'])->default('petrol');
             $table->string('color')->nullable();
             $table->integer('stock')->default(1);

@@ -59,4 +59,45 @@ class ProductController extends Controller
             'product' => $product,
         ], 200);
     }
+
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'category_id' => 'sometimes|exists:categories,id',
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'price' => 'sometimes|numeric|min:0',
+            'year' => 'sometimes|integer',
+            'make' => 'sometimes|string|max:255',
+            'model' => 'sometimes|string|max:255',
+            'mileage' => 'sometimes|integer|min:0',
+            'condition' => 'sometimes|in:new,used',
+            'transmission' => 'sometimes|in:automatic,manual',
+            'fuel_type' => 'sometimes|in:petrol,diesel,hybrid,electric,phev',
+            'color' => 'sometimes|string|max:255',
+            'stock' => 'sometimes|integer|min:0',
+            'image' => 'sometimes|string',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        if (isset($validated['title'])) {
+            $validated['slug'] = Str::slug($validated['title']);
+        }
+
+        $product->update($validated);
+
+        return response()->json([
+            'message' => 'Product has been updated successfully!',
+            'Product' => $product->fresh('category'),
+        ]);
+    }
+
+    public function destroy(Product $product)
+    {
+        $product->delete();
+
+        return response()->json([
+            'message' => 'Product has been deleted successfully!',
+        ], 200);
+    }
 }

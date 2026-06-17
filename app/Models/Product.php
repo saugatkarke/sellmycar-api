@@ -15,7 +15,7 @@ class Product extends Model
         'year',
         'make',
         'model',
-        'milage',
+        'mileage',
         'condition',
         'transmission',
         'fuel_type',

@@ -8,12 +8,46 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->get();
+        $query = Product::with('category');
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('make')) {
+            $query->where('make', $request->make);
+        }
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('sort')) {
+            if ($request->sort == 'price_asc') {
+                $query->orderBy('price', 'asc');
+            }
+            if ($request->sort == 'price_desc') {
+                $query->orderBy('price', 'desc');
+            }
+            if ($request->sort == 'newest') {
+                $query->orderBy('created_at', 'desc');
+            }
+        }
+
+
+        $products = $query->paginate(10);
 
         return response()->json([
-            'products' => $products,
+            'message' => 'Products fetched successfully!',
+            'data' => $products,
         ]);
     }
 
@@ -36,7 +70,18 @@ class ProductController extends Controller
             'image' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+
         $validated['slug'] = Str::slug($validated['title']);
+
+        //checks if the same slug exists and return that existed product id
+        $duplicateProduct = Product::where('slug', $validated['slug'])->first();
+
+        if ($duplicateProduct) {
+            return response()->json([
+                'message' => 'Another similar product exists!',
+                'product' => $duplicateProduct->id,
+            ], 422);
+        }
         $product = Product::create($validated);
 
         return response()->json([

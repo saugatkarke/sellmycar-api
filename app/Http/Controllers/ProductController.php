@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -67,7 +68,7 @@ class ProductController extends Controller
             'fuel_type' => 'required|in:petrol,diesel,hybrid,electric,phev',
             'color' => 'nullable|string|max:255',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'is_active' => 'boolean',
         ]);
 
@@ -81,6 +82,10 @@ class ProductController extends Controller
                 'message' => 'Another similar product exists!',
                 'product' => $duplicateProduct->id,
             ], 422);
+        }
+
+        if (($request->hasFile('image'))) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
         }
         $product = Product::create($validated);
 
@@ -121,12 +126,19 @@ class ProductController extends Controller
             'fuel_type' => 'sometimes|in:petrol,diesel,hybrid,electric,phev',
             'color' => 'sometimes|string|max:255',
             'stock' => 'sometimes|integer|min:0',
-            'image' => 'sometimes|string',
+            'image' => 'sometimes|image|mimes:jpeg,jpg,png,webp|max:2048',
             'is_active' => 'sometimes|boolean',
         ]);
 
         if (isset($validated['title'])) {
             $validated['slug'] = Str::slug($validated['title']);
+        }
+
+        if ($request->hasFile('image')) {
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
         $product->update($validated);

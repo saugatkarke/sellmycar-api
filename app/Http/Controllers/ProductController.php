@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -52,25 +54,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'year' => 'required|integer',
-            'make' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'mileage' => 'required|integer|min:0',
-            'condition' => 'required|in:new,used',
-            'transmission' => 'required|in:automatic,manual',
-            'fuel_type' => 'required|in:petrol,diesel,hybrid,electric,phev',
-            'color' => 'nullable|string|max:255',
-            'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['slug'] = Str::slug($validated['title']);
 
@@ -110,25 +96,9 @@ class ProductController extends Controller
         ], 200);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $validated = $request->validate([
-            'category_id' => 'sometimes|exists:categories,id',
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'price' => 'sometimes|numeric|min:0',
-            'year' => 'sometimes|integer',
-            'make' => 'sometimes|string|max:255',
-            'model' => 'sometimes|string|max:255',
-            'mileage' => 'sometimes|integer|min:0',
-            'condition' => 'sometimes|in:new,used',
-            'transmission' => 'sometimes|in:automatic,manual',
-            'fuel_type' => 'sometimes|in:petrol,diesel,hybrid,electric,phev',
-            'color' => 'sometimes|string|max:255',
-            'stock' => 'sometimes|integer|min:0',
-            'image' => 'sometimes|image|mimes:jpeg,jpg,png,webp|max:2048',
-            'is_active' => 'sometimes|boolean',
-        ]);
+        $validated = $request->validated();
 
         if (isset($validated['title'])) {
             $validated['slug'] = Str::slug($validated['title']);

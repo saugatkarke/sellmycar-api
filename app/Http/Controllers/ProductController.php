@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\ProductResource;
 
 class ProductController extends Controller
 {
@@ -45,13 +46,9 @@ class ProductController extends Controller
             }
         }
 
+        $products = $query->paginate(5);
 
-        $products = $query->paginate(10);
-
-        return response()->json([
-            'message' => 'Products fetched successfully!',
-            'data' => $products,
-        ]);
+        return  ProductResource::collection($products);
     }
 
     public function store(StoreProductRequest $request)
@@ -77,7 +74,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Product has been created successfully',
-            'product' => $product,
+            'product' => new ProductResource($product),
         ], 201);
     }
 
@@ -91,9 +88,7 @@ class ProductController extends Controller
             ], 404);
         }
 
-        return response()->json([
-            'product' => $product,
-        ], 200);
+        return new ProductResource($product->load('category'));
     }
 
     public function update(UpdateProductRequest $request, Product $product)
@@ -115,7 +110,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Product has been updated successfully!',
-            'Product' => $product->fresh('category'),
+            'product' => $product->fresh('category'),
         ]);
     }
 

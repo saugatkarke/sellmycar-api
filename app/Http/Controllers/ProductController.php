@@ -14,39 +14,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category');
-
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->filled('make')) {
-            $query->where('make', $request->make);
-        }
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
-
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('sort')) {
-            if ($request->sort == 'price_asc') {
-                $query->orderBy('price', 'asc');
-            }
-            if ($request->sort == 'price_desc') {
-                $query->orderBy('price', 'desc');
-            }
-            if ($request->sort == 'newest') {
-                $query->orderBy('created_at', 'desc');
-            }
-        }
-
-        $products = $query->paginate(5);
+        $products = Product::with('category')->filter($request)->paginate(5);
 
         return  ProductResource::collection($products);
     }

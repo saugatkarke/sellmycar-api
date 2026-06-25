@@ -2,10 +2,20 @@
 
 namespace App\Models;
 
+use App\Filters\ProductFilter;
 use Illuminate\Database\Eloquent\Model;
+
 
 class Product extends Model
 {
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Illuminate\Http\Request $request
+     */
+    public function scopeFilter($query, $request)
+    {
+        return (new ProductFilter)->apply($query, $request);
+    }
     protected $fillable = [
         'category_id',
         'title',

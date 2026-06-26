@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\ProductResource;
+use App\Services\ProductService;
 
 class ProductController extends Controller
 {
@@ -19,31 +20,20 @@ class ProductController extends Controller
         return  ProductResource::collection($products);
     }
 
-    public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request, ProductService $productService)
     {
-        $validated = $request->validated();
+        $product = $productService->create($request->validated(), $request->file('image'));
 
-        $validated['slug'] = Str::slug($validated['title']);
-
-        //checks if the same slug exists and return that existed product id
-        $duplicateProduct = Product::where('slug', $validated['slug'])->first();
-
-        if ($duplicateProduct) {
-            return response()->json([
-                'message' => 'Another similar product exists!',
-                'product' => $duplicateProduct->id,
-            ], 422);
+        if (! $product) {
+            return response()->json(
+                [
+                    'message' => 'A product with this slug already exists',
+                ],
+                422
+            );
         }
 
-        if (($request->hasFile('image'))) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
-        }
-        $product = Product::create($validated);
-
-        return response()->json([
-            'message' => 'Product has been created successfully',
-            'product' => new ProductResource($product),
-        ], 201);
+        return new ProductResource($product->load('category'));
     }
 
     public function show(int $id)

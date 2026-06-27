@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
@@ -25,15 +26,10 @@ class ProductController extends Controller
         $product = $productService->create($request->validated(), $request->file('image'));
 
         if (! $product) {
-            return response()->json(
-                [
-                    'message' => 'A product with this slug already exists',
-                ],
-                422
-            );
+            return ApiResponse::error('A product with this slug already exists', 'Duplicate Record', 422);
         }
 
-        return new ProductResource($product->load('category'));
+        return ApiResponse::success((new ProductResource($product->load('category'))), 'Product has been created successfully', 201);
     }
 
     public function show(int $id)

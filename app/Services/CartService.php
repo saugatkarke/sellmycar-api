@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\CartResource;
 use App\Models\Product;
 use App\Models\Cart;
+use App\Helpers\ApiResponse;
 use Exception;
 
 class CartService
@@ -59,5 +61,40 @@ class CartService
 
             return $cart->load('items.product');
         });
+    }
+
+    public function removeItem(int $userId, int $itemId)
+    {
+        return DB::transaction(function () use ($userId, $itemId) {
+
+            $cart = Cart::where('user_id', $userId)->firstOrFail();
+
+            $cart->items()->where('id', $itemId)->delete();
+
+            return $cart->fresh('items.product');
+        });
+    }
+
+    public function clearItem(int $userId)
+    {
+        return DB::transaction(function () use ($userId) {
+            $cart = Cart::where('user_id', $userId)->firstOrFail();
+
+            $cart->items()->delete();
+
+            return $cart->fresh('items.product');
+        });
+    }
+
+    public function index()
+    {
+        $cart = Cart::with('items.product')
+            ->where('user_id', auth()->id())
+            ->first();
+
+        return ApiResponse::success(
+            new CartResource($cart),
+            'Cart fetched successfully'
+        );
     }
 }

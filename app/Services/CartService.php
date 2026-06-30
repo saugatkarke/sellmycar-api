@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\OutOfStockException;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\CartResource;
 use App\Models\Product;
@@ -24,7 +25,7 @@ class CartService
             }
 
             if ($product->stock < $quantity) {
-                throw new Exception('Not enough stock available.');
+                throw new OutOfStockException();
             }
 
             // 2. Find or create cart

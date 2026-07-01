@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\OutOfStockException;
+use App\Exceptions\ProductUnavailableException;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\CartResource;
 use App\Models\Product;
@@ -21,7 +22,7 @@ class CartService
             $product = Product::findOrFail($productId);
 
             if (!$product->is_active) {
-                throw new Exception('Product is not available.');
+                throw new ProductUnavailableException();
             }
 
             if ($product->stock < $quantity) {

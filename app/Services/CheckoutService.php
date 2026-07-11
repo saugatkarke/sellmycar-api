@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\CartItem;
+use App\Models\OrderItem;
 
 class CheckoutService
 {
@@ -23,23 +24,58 @@ class CheckoutService
         $cartItems = $this->getCartItems($user);
         $this->validateCheckoutEligibility($cartItems);
 
-        DB::transaction(function () use ($user, $cartItems) {
+        return DB::transaction(function () use ($user, $cartItems) {
 
             $lockedProducts = $this->lockProducts($cartItems);
+
             $this->ensureStockAvailable($cartItems, $lockedProducts);
 
             $order = $this->createOrder($user, $cartItems);
 
-            // 3. create order items
+            $this->createOrderItems($order, $cartItems, $lockedProducts);
 
-            // 4. reduce stock
+            $this->reduceStock($cartItems, $lockedProducts);
 
             // 5. clear cart
-        });
+            $this->clearCart($user);
 
+            return $order;
+        });
         // 6. dispatch event
     }
 
+    private function clearCart(User $user): void
+    {
+        $user->cart()
+            ->first()
+            ->cartItems()
+            ->delete();
+    }
+    private function createOrderItems(Order $order, EloquentCollection $cartItems, EloquentCollection $lockProducts): void
+    {
+        foreach ($cartItems as $item) {
+            $product = $lockProducts->get($item->product_id);
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'product_title' => $product->title,
+                'product_make' => $product->make,
+                'product_model' => $product->model,
+                'product_year' => $product->year,
+                'quantity' => $item->quantity,
+                'price' => $product->price,
+                'subtotal' => $product->price * $item->quantity,
+            ]);
+        }
+    }
+
+    private function reduceStock(EloquentCollection $cartItems, EloquentCollection $products): void
+    {
+        foreach ($cartItems as $item) {
+            $product = $products->get($item->product_id);
+            $product->decrement('stock', $item->quantity);
+        }
+    }
     private function lockProducts(EloquentCollection $cartItems): EloquentCollection
     {
         $productIds = $cartItems
@@ -54,7 +90,7 @@ class CheckoutService
             ->keyBy('id');
     }
 
-    private function createOrder(User $user, CartItem $cartItems): Order
+    private function createOrder(User $user, EloquentCollection $cartItems): Order
     {
         $total = $cartItems->sum(function ($item) {
             return $item->product->price * $item->quantity;
@@ -76,12 +112,12 @@ class CheckoutService
         return $cartItems;
     }
 
-    private function validateCheckoutEligibility(CartItem $cartItem): void
+    private function validateCheckoutEligibility(EloquentCollection $cartItem): void
     {
         foreach ($cartItem as $item) {
             $this->ensureProductExists($item);
             $this->ensureProductIsActive($item);
-            $this->ensureProductQuantity($item);
+            $this->ensureValidQuantity($item);
         }
     }
     private function ensureProductExists(CartItem $item): void
@@ -96,9 +132,9 @@ class CheckoutService
             throw new ProductUnavailableException();
         }
     }
-    private function ensureProductQuantity(CartItem $item): void
+    private function ensureValidQuantity(CartItem $item): void
     {
-        if ($item->product->quantity <= 0) {
+        if ($item->quantity <= 0) {
             throw new \Exception("Invalid quantity");
         }
     }

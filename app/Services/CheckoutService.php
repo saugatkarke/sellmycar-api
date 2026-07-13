@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\OrderPlaced;
 use App\Exceptions\ProductUnavailableException;
 use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\CartEmptyException;
@@ -24,7 +25,7 @@ class CheckoutService
         $cartItems = $this->getCartItems($user);
         $this->validateCheckoutEligibility($cartItems);
 
-        return DB::transaction(function () use ($user, $cartItems) {
+        $order = DB::transaction(function () use ($user, $cartItems) {
 
             $lockedProducts = $this->lockProducts($cartItems);
 
@@ -41,7 +42,10 @@ class CheckoutService
 
             return $order;
         });
-        // 6. dispatch event
+
+        OrderPlaced::dispatch($order);
+
+        return $order;
     }
 
     private function clearCart(User $user): void
@@ -51,6 +55,7 @@ class CheckoutService
             ->cartItems()
             ->delete();
     }
+
     private function createOrderItems(Order $order, EloquentCollection $cartItems, EloquentCollection $lockProducts): void
     {
         foreach ($cartItems as $item) {

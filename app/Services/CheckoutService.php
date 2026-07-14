@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Services;
+
 use App\Events\OrderPlaced;
 use App\Exceptions\ProductUnavailableException;
 use App\Exceptions\ProductNotFoundException;

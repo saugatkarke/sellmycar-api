@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,6 +26,7 @@ class ProductFactory extends Factory
             'stock' => 10,
             'price' => fake()->numberBetween(2000, 100000),
             'year' => fake()->numberBetween(2002, 2026),
+
             'make' => fake()->randomElement([
                 'Toyota',
                 'Honda',
@@ -33,22 +35,15 @@ class ProductFactory extends Factory
                 'Kia',
                 'Mazda'
             ]),
+
             'model' => fake()->word(),
             'mileage' => fake()->numberBetween(1000, 200000),
-
             'condition' => 'used',
-
             'transmission' => 'automatic',
-
             'fuel_type' => 'petrol',
-
             'color' => fake()->colorName(),
-
             'image' => null,
-
             'is_active' => true,
-
-
         ];
     }
 

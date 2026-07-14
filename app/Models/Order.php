@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Order extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'order_number',
@@ -33,6 +35,6 @@ class Order extends Model
 
     public function generateOrderNumber()
     {
-        return 'ORD-'.date('Y').'-'.str_pad($this->id, 4, '0', STR_PAD_LEFT);
+        return 'ORD-' . date('Y') . '-' . str_pad($this->id, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -14,14 +14,15 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('order_number')->unique();
+            $table->string('order_number')->unique()->nullable();
             $table->enum('status', [
                 'pending',
                 'processing',
                 'completed',
                 'cancelled',
             ])->default('pending');
-            $table->decimal('total_amount',
+            $table->decimal(
+                'total_amount',
                 config('ecommerce.price.precision'),
                 config('ecommerce.price.scale')
             );

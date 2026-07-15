@@ -46,4 +46,33 @@ class CheckoutServiceTest extends TestCase
             'user_id' => $user->id
         ]);
     }
+
+    public function test_it_creates_order_item_and_price_snapshot_successfully(): void
+    {
+        Event::fake();
+        $user = User::factory()->create();
+        $product = Product::factory()->create([
+            'stock' => 10,
+            'price' => 20000
+        ]);
+
+        $cart = $user->cart()->create();
+
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'price' => $product->price,
+        ]);
+
+        $order = app(CheckoutService::class)->checkout($user);
+        $this->assertDatabaseCount('order_items', 1);
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_title' => $product->title,
+            'price' => $product->price,
+            'quantity' => 2,
+            'subtotal' => $product->price * 2,
+        ]);
+    }
 }

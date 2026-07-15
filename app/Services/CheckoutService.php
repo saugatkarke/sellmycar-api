@@ -10,6 +10,7 @@ use App\Exceptions\OutOfStockException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use App\Models\Product;
+use App\Models\Cart;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\CartItem;
@@ -24,7 +25,8 @@ class CheckoutService
      */
     public function checkout(User $user): Order
     {
-        $cartItems = $this->getCartItems($user);
+        $cart = $user->cart;
+        $cartItems = $this->getCartItems($cart);
         $this->validateCheckoutEligibility($cartItems);
 
         $order = DB::transaction(function () use ($user, $cartItems) {
@@ -52,9 +54,9 @@ class CheckoutService
 
     private function clearCart(User $user): void
     {
-        $user->cart()
+        $user->cart
             ->first()
-            ->cartItems()
+            ->items()
             ->delete();
     }
 
@@ -103,16 +105,22 @@ class CheckoutService
             return $item->product->price * $item->quantity;
         });
         // 2. create order
-        return Order::create([
+        $order = Order::create([
             'user_id' => $user->id,
             'total_amount' => $total,
             'status' => 'pending',
         ]);
+
+        $order->update([
+            'order_number' => '#' . (999 + $order->id),
+        ]);
+
+        return $order;
     }
 
-    private function getCartItems(User $user): EloquentCollection
+    private function getCartItems(Cart $cart): EloquentCollection
     {
-        $cartItems = $user->cartItems()->with('product')->get();
+        $cartItems = $cart->items()->with('product')->get();
         if ($cartItems->isEmpty()) {
             throw new CartEmptyException();
         }

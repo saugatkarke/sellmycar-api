@@ -65,6 +65,7 @@ class CheckoutServiceTest extends TestCase
         ]);
 
         $order = app(CheckoutService::class)->checkout($user);
+
         $this->assertDatabaseCount('order_items', 1);
         $this->assertDatabaseHas('order_items', [
             'order_id' => $order->id,
@@ -73,6 +74,57 @@ class CheckoutServiceTest extends TestCase
             'price' => $product->price,
             'quantity' => 2,
             'subtotal' => $product->price * 2,
+        ]);
+    }
+
+    public function test_it_reduces_product_stock_successfully(): void
+    {
+        Event::fake();
+        $user = User::factory()->create();
+
+        $cart = $user->cart()->create();
+
+        $product = Product::factory()->create([
+            'stock' => 10,
+            'price' => 10000,
+        ]);
+
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'price' => $product->price,
+        ]);
+
+        app(CheckoutService::class)->checkout($user);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'stock' => 8,
+        ]);
+    }
+
+    public function test_it_clears_cart_items_successfully(): void
+    {
+        Event::fake();
+        $user = User::factory()->create();
+
+        $cart = $user->cart()->create();
+
+        $product = Product::factory()->create([
+            'stock' => 10,
+            'price' => 10000,
+        ]);
+
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'price' => $product->price,
+        ]);
+
+        app(CheckoutService::class)->checkout($user);
+
+        $this->assertDatabaseMissing('cart_items', [
+            'cart_id' => $cart->id,
         ]);
     }
 }

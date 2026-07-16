@@ -4,9 +4,10 @@ namespace Tests\Feature\Services;
 
 use App\Models\User;
 use App\Models\Product;
-use App\Models\Cart;
-use App\Models\CartItem;
 use App\Models\Order;
+use App\Exceptions\CartEmptyException;
+use App\Exceptions\OutOfStockException;
+use App\Exceptions\ProductUnavailableException;
 use App\Services\CheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -126,5 +127,56 @@ class CheckoutServiceTest extends TestCase
         $this->assertDatabaseMissing('cart_items', [
             'cart_id' => $cart->id,
         ]);
+    }
+
+    public function test_it_throws_cart_empty_exception_when_cart_has_no_items(): void
+    {
+        $user = User::factory()->create();
+        $user->cart()->create();
+        $this->expectException(CartEmptyException::class);
+        app(CheckoutService::class)->checkout($user);
+    }
+
+    public function test_it_throws_out_of_stock_exception(): void
+    {
+        $user = User::factory()->create();
+        $cart = $user->cart()->create();
+
+        $product = Product::factory()->create([
+            'stock' => 0,
+            'price' => 10000,
+        ]);
+
+        $cart->items()->create([
+            'quantity' => 1,
+            'product_id' => $product->id,
+            'price' => $product->price,
+        ]);
+
+        $this->expectException(OutOfStockException::class);
+        app(CheckoutService::class)->checkout($user);
+    }
+
+    public function test_it_throws_product_unavailable_exception(): void
+    {
+        $user = User::factory()->create();
+        $cart = $user->cart()->create();
+
+        $product = Product::factory()->create([
+            'stock' => 2,
+        ]);
+
+        $cart->items()->create([
+            'quantity' => 1,
+            'product_id' => $product->id,
+            'price' => $product->price,
+            'subtotal' => $product->price * 1
+        ]);
+        $product->update([
+            'is_active' => false,
+        ]);
+
+        $this->expectException(ProductUnavailableException::class);
+        app(CheckoutService::class)->checkout($user);
     }
 }

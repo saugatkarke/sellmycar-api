@@ -20,10 +20,7 @@ class OrderItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_id' => null,
-            'product_id' => null,
-
-            'product_title' => fake()->word(),
+            'product_title' => fake()->senetence(3),
 
             'product_make' => fake()->word(),
 

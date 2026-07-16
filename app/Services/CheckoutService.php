@@ -130,17 +130,11 @@ class CheckoutService
     private function validateCheckoutEligibility(EloquentCollection $cartItem): void
     {
         foreach ($cartItem as $item) {
-            $this->ensureProductExists($item);
             $this->ensureProductIsActive($item);
             $this->ensureValidQuantity($item);
         }
     }
-    private function ensureProductExists(CartItem $item): void
-    {
-        if (!$item->product) {
-            throw new  ProductNotFoundException();
-        }
-    }
+
     private function ensureProductIsActive(CartItem $item): void
     {
         if (!$item->product->is_active) {

@@ -8,9 +8,10 @@ use App\Services\CartService;
 
 class CartController extends Controller
 {
-    public function __construct(
-        private CartService $cartService
-    ) {}
+    public function index(CartService $cartService)
+    {
+        return $cartService->index();
+    }
     public function store(AddToCartRequest $addToCartRequest, CartService $cartService)
     {
         $cart = $cartService->addToCart(

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -30,7 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/cart/items/{id}', [CartController::class, 'update']);
     Route::delete('/cart/items/{id}', [CartController::class, 'destroy']);
     Route::delete('/cart', [CartController::class, 'clear']);
-
+    //checkout
+    Route::post('/checkout', [CheckoutController::class, 'store']);
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Events\OrderPlaced;
 use App\Exceptions\ProductUnavailableException;
-use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\CartEmptyException;
 use App\Exceptions\OutOfStockException;
 use Illuminate\Support\Facades\DB;

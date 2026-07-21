@@ -14,7 +14,7 @@ class OrderControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_autheticated_user_can_only_access_their_own_order(): void
+    public function test_autheticated_user_can_only_see_their_own_order(): void
     {
         $userOne = User::factory()->create();
         $userSecond = User::factory()->create();
@@ -37,9 +37,10 @@ class OrderControllerTest extends TestCase
         $response->assertJsonMissing([
             'order_id' => $userSecondOrder->id,
         ]);
+        $response->assertJsonCount(1, 'data');
     }
 
-    public function test_order_contains_order_items(): void
+    public function test_user_can_view_order_with_order_items(): void
     {
         $user = User::factory()->create();
         $product = Product::factory()->create([
@@ -134,5 +135,32 @@ class OrderControllerTest extends TestCase
             'data.order_items.0.price',
             $order_items->price
         );
+    }
+
+    public function test_user_cannot_access_another_users_order(): void
+    {
+        $userOne = User::factory()->create();
+        $userTwo = User::factory()->create();
+
+        $orderUserTwo = Order::factory()->create([
+            'user_id' => $userTwo->id,
+        ]);
+
+        Sanctum::actingAs($userOne);
+
+        $response = $this->getJson('/api/orders/' . $orderUserTwo->id);
+        $response->assertStatus(404);
+    }
+
+    public function test_guest_user_cannot_access_order(): void
+    {
+        $user = User::factory()->create();
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->getJson('/api/orders/' . $order->id);
+        $response->assertStatus(401);
     }
 }

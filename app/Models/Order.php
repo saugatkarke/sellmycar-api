@@ -33,6 +33,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment
+        ::class);
+    }
     public function generateOrderNumber()
     {
         return 'ORD-' . date('Y') . '-' . str_pad($this->id, 4, '0', STR_PAD_LEFT);

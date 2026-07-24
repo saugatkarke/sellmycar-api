@@ -16,8 +16,11 @@ class Payment extends Model
         'total_amount',
         'currency',
         'status',
-        'paid_at',
 
+    ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
     ];
 
     public function order()

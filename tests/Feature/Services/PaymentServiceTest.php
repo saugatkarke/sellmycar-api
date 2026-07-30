@@ -3,6 +3,7 @@
 namespace Tests\Feature\Services;
 
 use App\Models\Order;
+use App\Models\User;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use Exception;
@@ -21,7 +22,7 @@ class PaymentServiceTest extends TestCase
         ]);
 
         //act
-        $payment = app(PaymentService::class)->createPayment($order);
+        $payment = app(PaymentService::class)->createPayment($order->user, $order);
 
         //assert
         $this->assertEquals(
@@ -39,9 +40,9 @@ class PaymentServiceTest extends TestCase
         ]);
 
         //act
-        app(PaymentService::class)->createPayment($order);
+        app(PaymentService::class)->createPayment($order->user, $order);
 
-        app(PaymentService::class)->createPayment($order);
+        app(PaymentService::class)->createPayment($order->user, $order);
 
 
         //assert
@@ -53,6 +54,19 @@ class PaymentServiceTest extends TestCase
             'status' => 'processing',
         ]);
         $this->expectException(Exception::class);
-        app(PaymentService::class)->createPayment($order);
+        app(PaymentService::class)->createPayment($order->user, $order);
+    }
+    public function test_it_cannot_create_payment_for_another_users_order(): void
+    {
+        $userOne = User::factory()->create();
+        $userTwo = User::factory()->create();
+
+        $order = Order::factory()->create([
+            'user_id' => $userTwo->id,
+        ]);
+        $this->expectException(Exception::class);
+
+        app(PaymentService::class)
+            ->createPayment($userOne, $order);
     }
 }

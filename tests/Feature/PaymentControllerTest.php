@@ -34,4 +34,18 @@ class PaymentControllerTest extends TestCase
             'status' => 'pending'
         ]);
     }
+    public function test_guest_cannot_create_payment(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'total_amount' => 3000,
+        ]);
+
+        $response = $this->postJson("/api/orders/{$order->id}/payments");
+
+        $response->assertUnauthorized();
+    }
 }

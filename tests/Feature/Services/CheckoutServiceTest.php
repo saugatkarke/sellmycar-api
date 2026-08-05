@@ -17,9 +17,6 @@ use App\Events\OrderPlaced;
 class CheckoutServiceTest extends TestCase
 {
     use RefreshDatabase;
-    /**
-     * A basic feature test example.
-     */
     public function test_it_creates_an_order_successfully(): void
     {
         Event::fake();

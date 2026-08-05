@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Exceptions\OutOfStockException;
+use App\Exceptions\UnauthorizedOrderPaymentException;
+use App\Exceptions\OrderNotPayableException;
 use Illuminate\Http\Request;
 use App\Helpers\ApiResponse;
 
@@ -32,5 +34,19 @@ return Application::configure(basePath: dirname(__DIR__))
                     409
                 );
             }
+        });
+
+        $exceptions->render(function (OrderNotPayableException $e) {
+
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], $e->statusCode);
+        });
+
+        $exceptions->render(function (UnauthorizedOrderPaymentException $e) {
+
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], $e->statusCode);
         });
     })->create();

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Services;
 
+use Stripe\StripeClient;
+
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Payment;
@@ -31,6 +33,7 @@ class PaymentServiceTest extends TestCase
         );
         $this->assertInstanceOf(Payment::class, $payment);
     }
+
     public function test_it_returns_existing_payment_successfully(): void
     {
         //arrange
@@ -48,6 +51,7 @@ class PaymentServiceTest extends TestCase
         //assert
         $this->assertDatabaseCount('payments', 1);
     }
+
     public function test_it_throws_exception_when_order_is_not_pending(): void
     {
         $order = Order::factory()->create([
@@ -56,6 +60,7 @@ class PaymentServiceTest extends TestCase
         $this->expectException(Exception::class);
         app(PaymentService::class)->createPayment($order->user, $order);
     }
+
     public function test_it_cannot_create_payment_for_another_users_order(): void
     {
         $userOne = User::factory()->create();

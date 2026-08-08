@@ -8,11 +8,10 @@ use App\Models\Payment;
 use App\Models\Order;
 use App\Models\User;
 use Stripe\StripeClient;
-use Exception;
 
 class PaymentService
 {
-    public function createPayment(User $user, Order $order): Payment
+    public function createPayment(User $user, Order $order, StripeClient $stripe): Payment
     {
         if ($order->user_id !== $user->id) {
             throw new UnauthorizedOrderPaymentException();
@@ -33,8 +32,6 @@ class PaymentService
             'total_amount' => $order->total_amount,
         ]);
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
-
         $intent = $stripe->paymentIntents->create([
             'amount' => (int) round($payment->total_amount * 100),
             'currency' => strtolower($payment->currency),
@@ -50,8 +47,7 @@ class PaymentService
         ]);
 
         $payment->update([
-            'payment_provider_id' => $intent->id,
-            'status' => $intent->status,
+            'provider_payment_id' => $intent->id,
         ]);
 
         $payment->setAttribute('client_secret', $intent->client_secret);

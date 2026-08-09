@@ -10,7 +10,6 @@ use App\Models\Order;
 use App\Models\User;
 use App\Models\Payment;
 use App\Services\PaymentService;
-use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -83,7 +82,7 @@ class PaymentServiceTest extends TestCase
         ]);
 
         $stripe = \Mockery::mock(StripeClient::class);
-        // don't set ->once() on paymentIntents->create
+
         $this->expectException(OrderNotPayableException::class);
         app(PaymentService::class)->createPayment($order->user, $order, $stripe);
     }
@@ -97,7 +96,7 @@ class PaymentServiceTest extends TestCase
             'user_id' => $userTwo->id,
         ]);
         $stripe = \Mockery::mock(StripeClient::class);
-        // don't set ->once() on paymentIntents->create
+
         $this->expectException(UnauthorizedOrderPaymentException::class);
 
         app(PaymentService::class)

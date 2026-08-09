@@ -7,11 +7,13 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes — no login required
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle']);
 
 // Protected routes — login required
 Route::middleware('auth:sanctum')->group(function () {

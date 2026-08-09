@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-
 class Payment extends Model
 {
     use HasFactory;
@@ -16,7 +15,7 @@ class Payment extends Model
         'total_amount',
         'currency',
         'status',
-
+        'paid_at'
     ];
 
     protected $casts = [

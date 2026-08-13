@@ -62,7 +62,7 @@ class StripeWebhookControllerTest extends TestCase
             'payment_found' => false,
         ]);
     }
-    public function test_it_updates_payment_as_paid_by_stripe_webhook(): void
+    public function test_it_updates_payment_and_order_as_paid_by_stripe_webhook(): void
     {
         $user = User::factory()->create();
         $order = Order::factory()->create([
@@ -112,5 +112,9 @@ class StripeWebhookControllerTest extends TestCase
         ]);
 
         $this->assertNotNull($payment->fresh()->paid_at);
+        $this->assertDatabaseHas('orders', [
+            'id' => $payment->order_id,
+            'payment_status' => 'paid',
+        ]);
     }
 }

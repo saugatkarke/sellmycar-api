@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Stripe\Webhook;
 
@@ -22,6 +23,11 @@ class StripeWebhookController extends Controller
                 $payment->update([
                     'status' => 'paid',
                     'paid_at' => now(),
+                ]);
+                $order = $payment->order;
+
+                $order->update([
+                    'payment_status' => 'paid'
                 ]);
             }
         }

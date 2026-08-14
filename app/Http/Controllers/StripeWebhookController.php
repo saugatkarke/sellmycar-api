@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\Order;
 use Illuminate\Http\Request;
 use Stripe\Webhook;
 
@@ -19,7 +18,7 @@ class StripeWebhookController extends Controller
         $payment = Payment::where('provider_payment_id', $PaymentIntentId)->first();
 
         if ($event->type == 'payment_intent.succeeded') {
-            if ($payment !== null) {
+            if ($payment !== null && $payment->status !== 'paid') {
                 $payment->update([
                     'status' => 'paid',
                     'paid_at' => now(),
@@ -29,6 +28,12 @@ class StripeWebhookController extends Controller
                 $order->update([
                     'payment_status' => 'paid'
                 ]);
+            }
+        }
+
+        if ($event->type === 'payment_intent.failed') {
+            if ($payment !== null) {
+                $payment->update(['status' => 'failed']);
             }
         }
 

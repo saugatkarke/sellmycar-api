@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\StripeWebhookEvent;
 use Illuminate\Http\Request;
 use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
@@ -26,6 +27,20 @@ class StripeWebhookController extends Controller
                 'message' => 'invalid webhook signature'
             ], 403);
         }
+
+        $existingStripeEvent = StripeWebhookEvent::where('event_id', $event->id)->first();
+        if ($existingStripeEvent) {
+            return response()->json([
+                'message' => 'webhook event already processed',
+            ], 200);
+        }
+
+        StripeWebhookEvent::create([
+            'event_id' => $event->id,
+            'event_type' => $event->type,
+            'payment_id' => $event->type,
+            'receivde_at' => now(),
+        ]);
         $PaymentIntentId = $event->data->object->id;
         $payment = Payment::where('provider_payment_id', $PaymentIntentId)->first();
 
@@ -42,7 +57,6 @@ class StripeWebhookController extends Controller
                 ]);
             }
         }
-
         if ($event->type === 'payment_intent.payment_failed') {
             if ($payment !== null && $payment->status === 'pending') {
                 $payment->update(['status' => 'failed']);

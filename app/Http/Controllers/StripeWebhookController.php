@@ -35,14 +35,14 @@ class StripeWebhookController extends Controller
             ], 200);
         }
 
+        $PaymentIntentId = $event->data->object->id;
+        $payment = Payment::where('provider_payment_id', $PaymentIntentId)->first();
         StripeWebhookEvent::create([
             'event_id' => $event->id,
             'event_type' => $event->type,
-            'payment_id' => $event->type,
-            'receivde_at' => now(),
+            'payment_id' => $payment?->id,
+            'received_at' => now(),
         ]);
-        $PaymentIntentId = $event->data->object->id;
-        $payment = Payment::where('provider_payment_id', $PaymentIntentId)->first();
 
         if ($event->type == 'payment_intent.succeeded') {
             if ($payment !== null && $payment->status === 'pending') {

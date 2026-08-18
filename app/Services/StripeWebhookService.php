@@ -57,7 +57,7 @@ class StripeWebhookService
         $payment = Payment::where('provider_payment_id', $PaymentIntentId)->first();
         return $payment;
     }
-    private function createStripeWebhookEvent(Event $event, Payment $payment): StripeWebhookEvent
+    private function createStripeWebhookEvent(Event $event, ?Payment $payment): StripeWebhookEvent
     {
         $webhookEvent =  StripeWebhookEvent::create([
             'event_id' => $event->id,
@@ -68,7 +68,7 @@ class StripeWebhookService
         return $webhookEvent;
     }
 
-    private function processSuccessfulStripeWebhookEvent(Event $event, Payment $payment): void
+    private function processSuccessfulStripeWebhookEvent(Event $event, ?Payment $payment): void
     {
         if ($event->type == 'payment_intent.succeeded') {
             if ($payment !== null && $payment->status === 'pending') {
@@ -87,7 +87,7 @@ class StripeWebhookService
             }
         }
     }
-    private function processFailedStripeWebhookEvent(Event $event, Payment $payment): void
+    private function processFailedStripeWebhookEvent(Event $event, ?Payment $payment): void
     {
         if ($event->type === 'payment_intent.payment_failed') {
             if ($payment !== null && $payment->status === 'pending') {

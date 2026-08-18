@@ -169,7 +169,7 @@ class StripeWebhookControllerTest extends TestCase
         $this->assertNull($payment->fresh()->paid_at);
     }
 
-    public function test_it_duplicate_payment_by_stripe_webhook(): void
+    public function  test_it_does_not_process_duplicate_stripe_webhook_event(): void
     {
         $user = User::factory()->create();
         $order = Order::factory()->create([
@@ -196,7 +196,7 @@ class StripeWebhookControllerTest extends TestCase
         ]);
 
         $signature = $this->generateStripeSignature($payload, config('services.stripe.webhook_secret'));
-        $response = $this
+        $responseOne = $this
             ->call(
                 'POST',
                 '/api/webhooks/stripe',
@@ -211,7 +211,7 @@ class StripeWebhookControllerTest extends TestCase
             );
 
         $paidAt = $payment->fresh()->paid_at;
-        $response = $this
+        $responseSecond = $this
             ->call(
                 'POST',
                 '/api/webhooks/stripe',
@@ -226,12 +226,14 @@ class StripeWebhookControllerTest extends TestCase
             );
 
         // Assert
-        $response->assertStatus(200);
-
+        $responseOne->assertStatus(200);
+        $responseSecond->assertJsonFragment(['message' => 'webhook event already processed']);
         $this->assertEquals(
             $paidAt,
             $payment->fresh()->paid_at
         );
+
+        $this->assertDatabaseCount('stripe_webhook_events', 1);
     }
 
     public function test_it_doesnot_change_data_for_unknown_stripe_paymentintent_id(): void
@@ -579,6 +581,57 @@ class StripeWebhookControllerTest extends TestCase
         $this->assertDatabaseCount(
             'payments',
             1
+        );
+    }
+    public function test_it_records_webhook_as_received_before_processing(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->create(
+            [
+                'user_id' => $user->id,
+                'status' => 'pending',
+                'total_amount' => 3000,
+            ]
+        );
+
+        Payment::factory()->create([
+            'order_id' => $order->id,
+            'provider' => 'stripe',
+            'provider_payment_id' => 'pi_test_123',
+            'status' => 'pending',
+        ]);
+        $payload = json_encode([
+            'id' => 'ent_test',
+            'type' => 'payment_intent.payment_failed',
+            'data' => [
+                'object' => [
+                    'id' => 'pi_test_123',
+                ],
+            ],
+        ]);
+
+        $signature = $this->generateStripeSignature(
+            $payload,
+            config('services.stripe.webhook_secret')
+        );
+
+        $response = $this->call(
+            'POST',
+            'api/webhooks/stripe',
+            [],
+            [],
+            [],
+            ['HTTP_STRIPE_SIGNATURE' => $signature, 'CONTENT_TYPE' => 'application/json'],
+            $payload
+        );
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas(
+            'stripe_webhook_events',
+            [
+                'processing_status' => 'processed'
+            ]
         );
     }
 }

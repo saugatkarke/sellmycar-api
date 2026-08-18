@@ -21,7 +21,7 @@ class StripeWebhookController extends Controller
         $event = $result['event'];
         $payment = $result['payment'];
 
-        if ($result['duplicate']) {
+        if ($result['duplicate'] ?? false) {
             return response()->json([
                 'message' => 'webhook event already processed',
             ], 200);

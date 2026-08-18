@@ -2,65 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Payment;
-use App\Models\StripeWebhookEvent;
+use App\Services\StripeWebhookService;
 use Illuminate\Http\Request;
-use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
 
 class StripeWebhookController extends Controller
 {
-    public function handle(Request $request)
+    public function handle(Request $request, StripeWebhookService $stripeWebhookService)
     {
-        $payload = $request->getContent();
-        $signature = $request->header('Stripe-Signature');
-        $secret = config('services.stripe.webhook_secret');
-
         try {
-            $event = Webhook::constructEvent(
-                $payload,
-                $signature,
-                $secret
-            );
+            $result = $stripeWebhookService->handleStripeWebhookEvent($request);
         } catch (SignatureVerificationException $e) {
             return response()->json([
                 'message' => 'invalid webhook signature'
             ], 403);
         }
 
-        $existingStripeEvent = StripeWebhookEvent::where('event_id', $event->id)->first();
-        if ($existingStripeEvent) {
+        $event = $result['event'];
+        $payment = $result['payment'];
+
+        if ($result['duplicate']) {
             return response()->json([
                 'message' => 'webhook event already processed',
             ], 200);
-        }
-
-        $PaymentIntentId = $event->data->object->id;
-        $payment = Payment::where('provider_payment_id', $PaymentIntentId)->first();
-        StripeWebhookEvent::create([
-            'event_id' => $event->id,
-            'event_type' => $event->type,
-            'payment_id' => $payment?->id,
-            'received_at' => now(),
-        ]);
-
-        if ($event->type == 'payment_intent.succeeded') {
-            if ($payment !== null && $payment->status === 'pending') {
-                $payment->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                ]);
-                $order = $payment->order;
-
-                $order->update([
-                    'payment_status' => 'paid'
-                ]);
-            }
-        }
-        if ($event->type === 'payment_intent.payment_failed') {
-            if ($payment !== null && $payment->status === 'pending') {
-                $payment->update(['status' => 'failed']);
-            }
         }
 
         return response()->json([

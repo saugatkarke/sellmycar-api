@@ -11,7 +11,8 @@ class StripeWebhookEvent extends Model
         'event_id',
         'event_type',
         'received_at',
-        'payment_id'
+        'payment_id',
+        'processing_status'
     ];
 
     protected $casts = [
